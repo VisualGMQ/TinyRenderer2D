@@ -9,12 +9,12 @@
 class DrawTexture: public App {
  public:
     DrawTexture() {
-        cloth_ = tinyrender2d::LoadTexture("test_resources/cloth1.png");
+        cloth_ = tinyrender2d::LoadTexture(render_, tinyrender2d::TEXTURE_TYPE_STATIC, "test_resources/cloth1.png");
         assert(cloth_);
         Log("cloth_ size: %d, %d", cloth_->GetSize().w, cloth_->GetSize().h);
-        cube_ = tinyrender2d::LoadTexture("test_resources/cube_man.png");
+        cube_ = tinyrender2d::LoadTexture(render_, tinyrender2d::TEXTURE_TYPE_TARGET, "test_resources/cube_man.png");
         assert(cube_);
-        icons_ = tinyrender2d::LoadTexture("test_resources/icons.png");
+        icons_ = tinyrender2d::LoadTexture(render_, tinyrender2d::TEXTURE_TYPE_TARGET, "test_resources/icons.png");
     }
 
     virtual ~DrawTexture() {
@@ -32,11 +32,11 @@ class DrawTexture: public App {
         static float angle = 0;
 
         tinyrender2d::Rect dst_rect = {0, 0, cloth_->GetSize().w*2, cloth_->GetSize().h*2};
-        render_->DrawTexture(cloth_, nullptr, dst_rect);
+        render_->DrawTexture(cloth_, nullptr, &dst_rect);
         dst_rect.y = 200;
         if (angle >= 360)
             angle = 0;
-        render_->DrawTexture(cloth_, nullptr, dst_rect, nullptr, angle);
+        render_->DrawTexture(cloth_, nullptr, &dst_rect, nullptr, angle);
         angle += 10;
 
         tinyrender2d::Rect src_rect = {0, 0, 90, 90};
@@ -46,7 +46,7 @@ class DrawTexture: public App {
         dst_rect.h = 90;
         tinyrender2d::Color color = {0, 200, 0, 255};
 
-        render_->DrawTexture(icons_, &src_rect, dst_rect, &color, 0, tinyrender2d::FLIP_BOTH);
+        render_->DrawTexture(icons_, &src_rect, &dst_rect, &color, 0, tinyrender2d::FLIP_BOTH);
         src_rect.x = 184;
         src_rect.y = 92;
         src_rect.w = 90;
@@ -54,22 +54,7 @@ class DrawTexture: public App {
         dst_rect = src_rect;
         dst_rect.x = 600;
         dst_rect.y = 400;
-        render_->DrawTexture(icons_, &src_rect, dst_rect, nullptr, 0, tinyrender2d::FLIP_VERTICAL);
-
-        // cloth_->ResetSize();
-        // render_->DrawTexture(cloth_, 100, 100);
-        // cloth_->Resize(100, 100);
-        // render_->DrawTexture(cloth_, 200, 200);
-        // cloth_->ResetSize();
-        // cloth_->SetRotation(30);
-        // render_->DrawTexture(cloth_, 300, 200);
-        // cloth_->SetFlipVertical();
-        // render_->DrawTexture(cloth_, 300, 200);
-
-        // cube_->SetKeycolor(125, 125, 125);
-        // render_->DrawTexture(cube_, 300, 200);
-        // cube_->SetColor(0, 255, 0);
-        // render_->DrawTexture(cube_, 300, 200);
+        render_->DrawTexture(icons_, &src_rect, &dst_rect, nullptr, 0, tinyrender2d::FLIP_VERTICAL);
     }
 };
 

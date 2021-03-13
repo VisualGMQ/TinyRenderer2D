@@ -22,14 +22,14 @@ class App {
     void MainLoop() {
         while (!should_quit_) {
             render_->SetClearColor(120, 120, 120, 255);
-            render_->ClearScreen();
+            render_->Clear();
             while (SDL_PollEvent(&event_)) {
                 if (event_.type == SDL_QUIT)
                     Exit();
             }
             step();
             SDL_GL_SwapWindow(window_);
-            SDL_Delay(60);
+            SDL_Delay(30);
         }
     }
 
@@ -74,9 +74,7 @@ class App {
     }
 
     void createRender() {
-        render_ = tinyrender2d::CreateRender();
-        render_->SetViewport(0, 0, WindowWidth, WindowHeight);
-        render_->SetDrawableSize(WindowWidth, WindowHeight);
+        render_ = tinyrender2d::CreateRender(WindowWidth, WindowHeight);
     }
 
     void destroyRender() {

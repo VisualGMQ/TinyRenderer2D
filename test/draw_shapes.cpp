@@ -38,6 +38,12 @@ private:
         render_->DrawRect(425, 425, 100, 50);
 
         render_->SetFillColorOpacity(255);
+
+        int w = 20, h = 10;
+        render_->DrawRect(2, 2, w, h);
+        render_->DrawRect(WindowWidth-w+2, 2, w, h);
+        render_->DrawRect(2, WindowHeight-h+2, w, h);
+        render_->DrawRect(WindowWidth-w+2, WindowHeight-h+2, w, h);
     }
 
     void drawCircle() {

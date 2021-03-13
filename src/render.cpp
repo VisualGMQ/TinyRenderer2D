@@ -3,19 +3,11 @@
 
 namespace tinyrender2d {
 
-Render::Render() {
+Render::Render(int window_width, int window_height) {
     glGenBuffers(1, &vbo_);
     glGenBuffers(1, &ebo_);
     glGenVertexArrays(1, &vao_);
-    glGenTextures(1, &tex_);
     Log("buffers create OK");
-
-    glBindTexture(GL_TEXTURE_2D, tex_);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    Log("texture configure OK");
 
     Shader geo_vertex_shader(ShaderType::VERTEX_SHADER, ReadShaderFile("shader/geo_shader_pure_color.vert")),
            geo_frag_shader(ShaderType::FRAGMENT_SHADER, ReadShaderFile("shader/geo_shader_pure_color.frag"));
@@ -48,6 +40,11 @@ Render::Render() {
     glEnable(GL_BLEND);
     glEnable(GL_PROGRAM_POINT_SIZE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    window_size_.w = window_width;
+    window_size_.h = window_height;
+    SetViewport(0, 0, window_width, window_height);
+    SetDrawableSize(window_width, window_height);
 };
 
 void Render::SetClearColor(const Color& color) {
@@ -79,17 +76,20 @@ void Render::SetFillColorOpacity(uint8_t opacity) {
 }
 
 void Render::SetViewport(int x, int y, int w, int h) {
-    glViewport(x, y, w, h);
+    glViewport(0, 0, w, h);
 }
 
-void Render::ClearScreen() {
+void Render::Clear() {
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void Render::SetDrawableSize(int w, int h) {
-    proj_ = glm::ortho(0.0f, static_cast<float>(w), static_cast<float>(h), 0.0f, -1.0f, 1.0f);
+    screen_proj_ = glm::ortho(0.0f, static_cast<float>(w), static_cast<float>(h), 0.0f, -1.0f, 1.0f);
     drawable_size_.w = w;
     drawable_size_.h = h;
+    if (is_at_default_framebuffer) {
+        current_proj_ = screen_proj_;
+    }
 }
 
 void Render::SetPointSize(uint32_t size) {
@@ -122,7 +122,7 @@ void Render::DrawLines(const Point* points, int num) {
     glEnableVertexAttribArray(0);
 
     useGeomentryPureColorProgram();
-    geo_pure_color_program_->UniformMat4f("proj", proj_);
+    geo_pure_color_program_->UniformMat4f("proj", current_proj_);
     geo_pure_color_program_->UniformVec4i("fragColor256", draw_color_);
     
     glDrawArrays(GL_LINE_STRIP, 0, num);
@@ -157,7 +157,7 @@ void Render::DrawPolygon(Point* points, int num) {
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
     glBindVertexArray(vao_);
-    geo_pure_color_program_->UniformMat4f("proj", proj_);
+    geo_pure_color_program_->UniformMat4f("proj", current_proj_);
     glBufferData(GL_ARRAY_BUFFER, sizeof(Point)*num, points, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)0);
     glEnableVertexAttribArray(0);
@@ -182,7 +182,7 @@ void Render::DrawPolygon(ColorfulPoint* points, int num) {
     if (num <= 2)
         return;
     useGeomentryColorfulProgram();
-    geo_colorful_program_->UniformMat4f("proj", proj_);
+    geo_colorful_program_->UniformMat4f("proj", current_proj_);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
     glBindVertexArray(vao_);
@@ -211,7 +211,7 @@ void Render::DrawCircle(int x, int y, int radius) {
     }
 
     useGeomentryPureColorProgram();
-    geo_pure_color_program_->UniformMat4f("proj", proj_);
+    geo_pure_color_program_->UniformMat4f("proj", current_proj_);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
     glBindVertexArray(vao_);
@@ -243,13 +243,15 @@ void Render::DrawPoint(int x, int y) {
     glEnableVertexAttribArray(0);
 
     useGeomentryPureColorProgram();
-    geo_pure_color_program_->UniformMat4f("proj", proj_);
+    geo_pure_color_program_->UniformMat4f("proj", current_proj_);
     geo_pure_color_program_->UniformVec4i("fragColor256", draw_color_);
 
     glDrawArrays(GL_POINTS, 0, 1);
 }
 
-void Render::DrawTexture(Texture* texture, const Rect* src_rect, const Rect& dst_rect, const Color* color, float degree, FlipType flip) {
+void Render::DrawTexture(Texture* texture, const Rect* src_rect, const Rect* dst_rect, const Color* color, float degree, FlipType flip) {
+    if (!texture)
+        return;
     useTextureProgram();
     float data[] = {
         0, 0, 0, 0,
@@ -299,12 +301,20 @@ void Render::DrawTexture(Texture* texture, const Rect* src_rect, const Rect& dst
     glEnableVertexAttribArray(0);
 
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(dst_rect.x, dst_rect.y, 0));
-    model = glm::translate(model, glm::vec3(dst_rect.w/2.0, dst_rect.h/2, 0));
+    Rect rect;
+    if (dst_rect) {
+        rect = *dst_rect;
+    } else {
+        rect.x = 0;
+        rect.y = 0;
+        rect.w = drawable_size_.w;
+        rect.h = drawable_size_.h;
+    }
+    model = glm::translate(model, glm::vec3(rect.w/2.0+rect.x, rect.h/2+rect.y, 0));
     model = glm::rotate(model, glm::radians(degree), glm::vec3(0, 0, 1));
-    model = glm::translate(model, glm::vec3(-dst_rect.w/2.0, -dst_rect.h/2.0, 0));
-    float scale_x = dst_rect.w,
-          scale_y = dst_rect.h;
+    model = glm::translate(model, glm::vec3(-rect.w/2.0, -rect.h/2.0, 0));
+    float scale_x = rect.w,
+          scale_y = rect.h;
     if (flip & FLIP_HORIZONTAL) {
         scale_x = -scale_x;
     }
@@ -314,7 +324,7 @@ void Render::DrawTexture(Texture* texture, const Rect* src_rect, const Rect& dst
     model = glm::scale(model, glm::vec3(scale_x, scale_y, 1));
 
     texture_program_->UniformMat4f("model", model);
-    texture_program_->UniformMat4f("proj", proj_);
+    texture_program_->UniformMat4f("proj", current_proj_);
     texture_program_->Uniform1i("Texture", 0);
     if (color) {
         texture_program_->Uniform3f("TextureColor256", color->r, color->g, color->b);
@@ -322,13 +332,28 @@ void Render::DrawTexture(Texture* texture, const Rect* src_rect, const Rect& dst
         texture_program_->Uniform3f("TextureColor256", 255, 255, 255);
     }
 
-    if (texture->GetData()) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->GetData());
+    if (texture->tex_) {
         glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture->tex_);
 
         glDrawArrays(GL_TRIANGLES, 0, 6);
+        glBindTexture(GL_TEXTURE_2D, 0);
     }
 
+}
+
+void Render::SetTarget(Texture* texture) {
+    if (texture) {
+        is_at_default_framebuffer = false;
+        glBindFramebuffer(GL_FRAMEBUFFER, texture->fbo_);
+        current_proj_ = glm::ortho(0.0f, static_cast<float>(texture->GetSize().w), static_cast<float>(texture->GetSize().h), 0.0f, -1.0f, 1.0f);
+        SetViewport(0, 0, texture->GetSize().w, texture->GetSize().h);
+    } else {
+        is_at_default_framebuffer = true;
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        SetViewport(0, 0, window_size_.w, window_size_.h);
+        current_proj_ = screen_proj_;
+    }
 }
 
 Render::~Render() {
@@ -346,12 +371,11 @@ void Render::destroy() {
     ebo_ = 0;
     glDeleteVertexArrays(1, &vao_);
     vao_ = 0;
-    glDeleteTextures(1, &tex_);
-    tex_ = 0;
 }
 
-Render* CreateRender() {
-    return new Render;
+Render* CreateRender(int window_width, int window_height) {
+    Render* render = new Render(window_width, window_height);
+    return render;
 }
 
 void DestroyRender(Render* render) {

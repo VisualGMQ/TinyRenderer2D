@@ -23,8 +23,9 @@ using std::vector;
 
 class Render final {
  public:
-    Render();
+    Render(int window_width, int window_height);
     ~Render();
+    // some setter and getter function
     Color GetClearColor() const { return clear_color_; }
     void SetClearColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255);
     void SetClearColor(const Color& color);
@@ -39,7 +40,10 @@ class Render final {
 
     void SetViewport(int x, int y, int w, int h);
     void SetDrawableSize(int w, int h);
+
+    void SetPointSize(uint32_t size);
     
+    // some draw function
     void DrawLine(int x1, int y1, int x2, int y2);
     void DrawLine(const Point& p1, const Point& p2);
 
@@ -58,26 +62,27 @@ class Render final {
 
     void DrawPoint(int x, int y);
 
-    // TODO this function is very slow, try to generate texture buffer or framebuffer for every Texture.
-    void DrawTexture(Texture* texture, const Rect* src_rect, const Rect& dst_rect, const Color* color = nullptr, float degree = 0, FlipType flip = FLIP_NONE);
+    void DrawTexture(Texture* texture, const Rect* src_rect, const Rect* dst_rect, const Color* color = nullptr, float degree = 0, FlipType flip = FLIP_NONE);
 
-    void SetPointSize(uint32_t size);
-
-    void ClearScreen();
+    // some other functions
+    void Clear();
+    void SetTarget(Texture* texture);
 
  private:
     GLuint vbo_ = 0;
     GLuint ebo_ = 0;
     GLuint vao_ = 0;
-    GLuint tex_ = 0;
 
-    glm::mat4 proj_ = glm::mat4(1.0f);
+    glm::mat4 screen_proj_ = glm::mat4(1.0f);
+    glm::mat4 current_proj_ = glm::mat4(1.0f);
+    bool is_at_default_framebuffer = true;
 
     Color draw_color_;
     Color fill_color_;
     Color clear_color_;
 
     Size drawable_size_;
+    Size window_size_;
 
     Program* geo_pure_color_program_ = nullptr;
     Program* geo_colorful_program_ = nullptr;
@@ -100,7 +105,7 @@ class Render final {
     void destroy();
 };
 
-Render* CreateRender();
+Render* CreateRender(int window_width, int window_height);
 void DestroyRender(Render* render);
 
 }; // NAMESPACE tinyrender2d
