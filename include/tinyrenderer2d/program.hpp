@@ -7,7 +7,7 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-namespace tinyrender2d {
+namespace tinyrenderer2d {
 
 using std::string;
 

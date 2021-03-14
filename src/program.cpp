@@ -1,6 +1,6 @@
-#include "tinyrender2d/program.hpp"
+#include "tinyrenderer2d/program.hpp"
 
-namespace tinyrender2d {
+namespace tinyrenderer2d {
 
 Program::Program(Shader& vertex_shader, Shader& frag_shader) {
     program_ = glCreateProgram(); 

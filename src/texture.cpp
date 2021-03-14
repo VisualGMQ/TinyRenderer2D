@@ -1,10 +1,10 @@
-#include "tinyrender2d/texture.hpp"
+#include "tinyrenderer2d/texture.hpp"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-namespace tinyrender2d {
+namespace tinyrenderer2d {
 
-Texture::Texture(Render* render, TextureType type, int w, int h) {
+Texture::Texture(Renderer* render, TextureType type, int w, int h) {
     if (w > 0 && h > 0) {
         glGenTextures(1, &tex_);
         glBindTexture(GL_TEXTURE_2D, tex_);
@@ -44,15 +44,14 @@ Texture::~Texture() {
     glDeleteFramebuffers(1, &fbo_);
 }
 
-Texture* CreateTexture(Render* render, TextureType type, int w, int h) {
+Texture* CreateTexture(Renderer* render, TextureType type, int w, int h) {
     Texture* texture = new Texture(render, type, w, h);
     return texture;
 }
 
-Texture* LoadTexture(Render* render, TextureType type, std::string filename) {
+Texture* LoadTexture(Renderer* render, TextureType type, std::string filename) {
     int w, h, channels;
     unsigned char* data = stbi_load(filename.c_str(), &w, &h, &channels, 0);
-    Log("channels:%d", channels);
     if (!data) {
         Log("%s can't load", filename.c_str());
         return nullptr;

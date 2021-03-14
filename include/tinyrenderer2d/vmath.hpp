@@ -5,7 +5,7 @@
 
 #include "glm/glm.hpp"
 
-namespace tinyrender2d {
+namespace tinyrenderer2d {
 
 using Point = glm::vec2;
 using Color = glm::vec4;

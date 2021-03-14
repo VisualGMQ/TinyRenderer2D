@@ -1,7 +1,7 @@
 #ifndef APP_HPP
 #define APP_HPP
 
-#include "tinyrender2d/render.hpp"
+#include "tinyrenderer2d/tinyrenderer2d.hpp"
 
 #include "SDL.h"
 #define GLEW_STATIC
@@ -14,9 +14,7 @@ class App {
  public:
     App() {
         initSDL();
-        Log("inited SDL");
         createRender();
-        Log("created render");
     }
 
     void MainLoop() {
@@ -35,19 +33,16 @@ class App {
 
     void Exit() {
         should_quit_ = true;
-        Log("want quit app");
     }
 
     virtual ~App() {
         destroyRender();
-        Log("destroyed render");
         quitSDL();
-        Log("quit sdl");
     }
 
  protected:
     SDL_Window* window_ = nullptr;
-    tinyrender2d::Render* render_;
+    tinyrenderer2d::Renderer* render_;
 
  private:
     SDL_Event event_;
@@ -58,6 +53,9 @@ class App {
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+        SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 2);
         window_ = SDL_CreateWindow(
                 "hello world",
                 SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -74,11 +72,11 @@ class App {
     }
 
     void createRender() {
-        render_ = tinyrender2d::CreateRender(WindowWidth, WindowHeight);
+        render_ = tinyrenderer2d::CreateRenderer(WindowWidth, WindowHeight);
     }
 
     void destroyRender() {
-        tinyrender2d::DestroyRender(render_);
+        tinyrenderer2d::DestroyRenderer(render_);
     }
 
     void quitSDL() {

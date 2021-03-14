@@ -1,6 +1,6 @@
-#include "tinyrender2d/shader.hpp"
+#include "tinyrenderer2d/shader.hpp"
 
-namespace tinyrender2d {
+namespace tinyrenderer2d {
 
 Shader::Shader(ShaderType type, string shader_code) {
     if (type == ShaderType::VERTEX_SHADER) {

@@ -1,5 +1,5 @@
-#ifndef RENDER_HPP
-#define RENDER_HPP
+#ifndef RENDERER_HPP
+#define RENDERER_HPP
 
 #include <vector>
 #include <array>
@@ -17,14 +17,14 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
-namespace tinyrender2d {
+namespace tinyrenderer2d {
 
 using std::vector;
 
-class Render final {
+class Renderer final {
  public:
-    Render(int window_width, int window_height);
-    ~Render();
+    Renderer(int window_width, int window_height);
+    ~Renderer();
     // some setter and getter function
     Color GetClearColor() const { return clear_color_; }
     void SetClearColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255);
@@ -46,9 +46,12 @@ class Render final {
     // some draw function
     void DrawLine(int x1, int y1, int x2, int y2);
     void DrawLine(const Point& p1, const Point& p2);
+    void DrawLine(const ColorfulPoint& p1, const ColorfulPoint& p2);
 
     void DrawLines(const Point* points, int num);
     void DrawLines(const vector<Point>& points);
+    void DrawLines(const ColorfulPoint* points, int num);
+    void DrawLines(const vector<ColorfulPoint>& points);
 
     void DrawRect(int x, int y, int w, int h);
     void DrawRect(const Rect& rect);
@@ -105,8 +108,8 @@ class Render final {
     void destroy();
 };
 
-Render* CreateRender(int window_width, int window_height);
-void DestroyRender(Render* render);
+Renderer* CreateRenderer(int window_width, int window_height);
+void DestroyRenderer(Renderer* render);
 
 }; // NAMESPACE tinyrender2d
 

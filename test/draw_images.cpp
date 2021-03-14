@@ -1,37 +1,33 @@
-#include "tinyrender2d/render.hpp"
-#include "tinyrender2d/texture.hpp"
-#include "tinyrender2d/tool.hpp"
+#include "app.hpp"
 
 #include <cassert>
-
-#include "app.hpp"
 
 class DrawTexture: public App {
  public:
     DrawTexture() {
-        cloth_ = tinyrender2d::LoadTexture(render_, tinyrender2d::TEXTURE_TYPE_STATIC, "test_resources/cloth1.png");
+        cloth_ = tinyrenderer2d::LoadTexture(render_, tinyrenderer2d::TEXTURE_TYPE_STATIC, "test_resources/cloth1.png");
         assert(cloth_);
         Log("cloth_ size: %d, %d", cloth_->GetSize().w, cloth_->GetSize().h);
-        cube_ = tinyrender2d::LoadTexture(render_, tinyrender2d::TEXTURE_TYPE_TARGET, "test_resources/cube_man.png");
+        cube_ = tinyrenderer2d::LoadTexture(render_, tinyrenderer2d::TEXTURE_TYPE_TARGET, "test_resources/cube_man.png");
         assert(cube_);
-        icons_ = tinyrender2d::LoadTexture(render_, tinyrender2d::TEXTURE_TYPE_TARGET, "test_resources/icons.png");
+        icons_ = tinyrenderer2d::LoadTexture(render_, tinyrenderer2d::TEXTURE_TYPE_TARGET, "test_resources/icons.png");
     }
 
     virtual ~DrawTexture() {
-        tinyrender2d::DestroyTexture(cloth_);
-        tinyrender2d::DestroyTexture(cube_);
-        tinyrender2d::DestroyTexture(icons_);
+        tinyrenderer2d::DestroyTexture(cloth_);
+        tinyrenderer2d::DestroyTexture(cube_);
+        tinyrenderer2d::DestroyTexture(icons_);
     }
 
  private:
-    tinyrender2d::Texture* cloth_ = nullptr;
-    tinyrender2d::Texture* cube_ = nullptr;
-    tinyrender2d::Texture* icons_ = nullptr;
+    tinyrenderer2d::Texture* cloth_ = nullptr;
+    tinyrenderer2d::Texture* cube_ = nullptr;
+    tinyrenderer2d::Texture* icons_ = nullptr;
 
     void step() override {
         static float angle = 0;
 
-        tinyrender2d::Rect dst_rect = {0, 0, cloth_->GetSize().w*2, cloth_->GetSize().h*2};
+        tinyrenderer2d::Rect dst_rect = {0, 0, cloth_->GetSize().w*2, cloth_->GetSize().h*2};
         render_->DrawTexture(cloth_, nullptr, &dst_rect);
         dst_rect.y = 200;
         if (angle >= 360)
@@ -39,14 +35,14 @@ class DrawTexture: public App {
         render_->DrawTexture(cloth_, nullptr, &dst_rect, nullptr, angle);
         angle += 10;
 
-        tinyrender2d::Rect src_rect = {0, 0, 90, 90};
+        tinyrenderer2d::Rect src_rect = {0, 0, 90, 90};
         dst_rect.x = 600;
         dst_rect.y = 200;
         dst_rect.w = 90;
         dst_rect.h = 90;
-        tinyrender2d::Color color = {0, 200, 0, 255};
+        tinyrenderer2d::Color color = {0, 200, 0, 255};
 
-        render_->DrawTexture(icons_, &src_rect, &dst_rect, &color, 0, tinyrender2d::FLIP_BOTH);
+        render_->DrawTexture(icons_, &src_rect, &dst_rect, &color, 0, tinyrenderer2d::FLIP_BOTH);
         src_rect.x = 184;
         src_rect.y = 92;
         src_rect.w = 90;
@@ -54,7 +50,7 @@ class DrawTexture: public App {
         dst_rect = src_rect;
         dst_rect.x = 600;
         dst_rect.y = 400;
-        render_->DrawTexture(icons_, &src_rect, &dst_rect, nullptr, 0, tinyrender2d::FLIP_VERTICAL);
+        render_->DrawTexture(icons_, &src_rect, &dst_rect, nullptr, 0, tinyrenderer2d::FLIP_VERTICAL);
     }
 };
 

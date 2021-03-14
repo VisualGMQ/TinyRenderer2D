@@ -18,7 +18,7 @@ static string ReadShaderFile(string filename) {
     return content;
 }
 
-namespace tinyrender2d {
+namespace tinyrenderer2d {
 
 enum FlipType {
     FLIP_NONE = 0x00,

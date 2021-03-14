@@ -6,7 +6,7 @@
 #include "GL/glew.h"
 #include "tool.hpp"
 
-namespace tinyrender2d {
+namespace tinyrenderer2d {
 
 enum class ShaderType {
     VERTEX_SHADER,

@@ -8,7 +8,7 @@
 #include "log.hpp"
 #include "tool.hpp"
 
-namespace tinyrender2d {
+namespace tinyrenderer2d {
 
 enum TextureType {
     TEXTURE_TYPE_TARGET,    /** this type can be target by render*/
@@ -20,13 +20,13 @@ enum PixelFormat {
     PIXEL_FORMAT_RGBA8888
 };
 
-class Render;
+class Renderer;
 
 class Texture final {
  public:
-    friend class Render;
+    friend class Renderer;
 
-    Texture(Render* render, TextureType type, int w, int h);
+    Texture(Renderer* render, TextureType type, int w, int h);
     ~Texture();
     Size GetSize() const { return size_; }
     void UpdateData(unsigned char* data, int w, int h, PixelFormat format);
@@ -38,8 +38,8 @@ class Texture final {
     GLuint fbo_ = 0;
 };
 
-Texture* LoadTexture(Render* render, TextureType type, std::string filename);
-Texture* CreateTexture(Render* render, TextureType type, int w, int h);
+Texture* LoadTexture(Renderer* render, TextureType type, std::string filename);
+Texture* CreateTexture(Renderer* render, TextureType type, int w, int h);
 void DestroyTexture(Texture* texture);
 
 };

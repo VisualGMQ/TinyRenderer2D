@@ -1,9 +1,9 @@
-#include "tinyrender2d/render.hpp"
-#include "tinyrender2d/tool.hpp"
+#include "tinyrenderer2d/renderer.hpp"
+#include "tinyrenderer2d/tool.hpp"
 
-namespace tinyrender2d {
+namespace tinyrenderer2d {
 
-Render::Render(int window_width, int window_height) {
+Renderer::Renderer(int window_width, int window_height) {
     glGenBuffers(1, &vbo_);
     glGenBuffers(1, &ebo_);
     glGenVertexArrays(1, &vao_);
@@ -24,11 +24,6 @@ Render::Render(int window_width, int window_height) {
     texture_program_ = new Program(tex_vertex_shader, tex_frag_shader);
     Log("texture program create OK");
 
-    // Shader test_vertex_shader(ShaderType::VERTEX_SHADER, ReadShaderFile("shader/test.vert")),
-    //        test_frag_shader(ShaderType::FRAGMENT_SHADER, ReadShaderFile("shader/test.frag"));
-    // test_program_ = new Program(test_vertex_shader, test_frag_shader);
-    // Log("texture program create OK");
-
     clear_color_.r = 0;
     clear_color_.g = 0;
     clear_color_.b = 0;
@@ -39,6 +34,7 @@ Render::Render(int window_width, int window_height) {
 
     glEnable(GL_BLEND);
     glEnable(GL_PROGRAM_POINT_SIZE);
+    glEnable(GL_MULTISAMPLE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     window_size_.w = window_width;
@@ -47,43 +43,43 @@ Render::Render(int window_width, int window_height) {
     SetDrawableSize(window_width, window_height);
 };
 
-void Render::SetClearColor(const Color& color) {
+void Renderer::SetClearColor(const Color& color) {
     SetClearColor(color.r, color.g, color.b, color.a);
 }
 
-void Render::SetClearColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+void Renderer::SetClearColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
     glClearColor(r/255.0, g/255.0, b/255.0, a/255.0);
 }
 
-void Render::SetDrawColor(uint8_t r, uint8_t g, uint8_t b) {
+void Renderer::SetDrawColor(uint8_t r, uint8_t g, uint8_t b) {
     draw_color_.r = r;
     draw_color_.g = g;
     draw_color_.b = b;
 }
 
-void Render::SetDrawColorOpacity(uint8_t opacity) {
+void Renderer::SetDrawColorOpacity(uint8_t opacity) {
     draw_color_.a = opacity;
 }
 
-void Render::SetFillColor(uint8_t r, uint8_t g, uint8_t b) {
+void Renderer::SetFillColor(uint8_t r, uint8_t g, uint8_t b) {
     fill_color_.r = r;
     fill_color_.g = g;
     fill_color_.b = b;
 }
 
-void Render::SetFillColorOpacity(uint8_t opacity) {
+void Renderer::SetFillColorOpacity(uint8_t opacity) {
     fill_color_.a = opacity;
 }
 
-void Render::SetViewport(int x, int y, int w, int h) {
+void Renderer::SetViewport(int x, int y, int w, int h) {
     glViewport(0, 0, w, h);
 }
 
-void Render::Clear() {
+void Renderer::Clear() {
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void Render::SetDrawableSize(int w, int h) {
+void Renderer::SetDrawableSize(int w, int h) {
     screen_proj_ = glm::ortho(0.0f, static_cast<float>(w), static_cast<float>(h), 0.0f, -1.0f, 1.0f);
     drawable_size_.w = w;
     drawable_size_.h = h;
@@ -92,11 +88,11 @@ void Render::SetDrawableSize(int w, int h) {
     }
 }
 
-void Render::SetPointSize(uint32_t size) {
+void Renderer::SetPointSize(uint32_t size) {
     glPointSize(size);
 }
 
-void Render::DrawLine(int x1, int y1, int x2, int y2) {
+void Renderer::DrawLine(int x1, int y1, int x2, int y2) {
     Point data[2];
     data[0].x = x1;
     data[0].y = y1;
@@ -106,29 +102,55 @@ void Render::DrawLine(int x1, int y1, int x2, int y2) {
     DrawLines(data, 2);
 }
 
-void Render::DrawLine(const Point& p1, const Point& p2) {
+void Renderer::DrawLine(const Point& p1, const Point& p2) {
     DrawLine(p1.x, p1.y, p2.x, p2.y);
 }
 
-void Render::DrawLines(const vector<Point>& points) {
+void Renderer::DrawLines(const vector<Point>& points) {
     DrawLines(points.data(), points.size());
 }
 
-void Render::DrawLines(const Point* points, int num) {
+void Renderer::DrawLines(const Point* points, int num) {
+    useGeomentryPureColorProgram();
+    geo_pure_color_program_->UniformMat4f("proj", current_proj_);
+    geo_pure_color_program_->UniformVec4i("fragColor256", draw_color_);
+
     glBindBuffer(GL_ARRAY_BUFFER, vbo_);
     glBindVertexArray(vao_);
     glBufferData(GL_ARRAY_BUFFER, num*sizeof(Point), points, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)0);
     glEnableVertexAttribArray(0);
-
-    useGeomentryPureColorProgram();
-    geo_pure_color_program_->UniformMat4f("proj", current_proj_);
-    geo_pure_color_program_->UniformVec4i("fragColor256", draw_color_);
     
     glDrawArrays(GL_LINE_STRIP, 0, num);
 }
 
-void Render::DrawRect(int x, int y, int w, int h) {
+void Renderer::DrawLine(const ColorfulPoint& p1, const ColorfulPoint& p2) {
+    ColorfulPoint points[] = {p1, p2};
+    DrawLines(points, 2);
+}
+
+void Renderer::DrawLines(const vector<ColorfulPoint>& points) {
+    DrawLines(points.data(), points.size());
+}
+
+void Renderer::DrawLines(const ColorfulPoint* points, int num) {
+    if (num < 2)
+        return;
+    useGeomentryColorfulProgram();
+    geo_colorful_program_->UniformMat4f("proj", current_proj_);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+    glBindVertexArray(vao_);
+    glBufferData(GL_ARRAY_BUFFER, num*sizeof(ColorfulPoint), points, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(ColorfulPoint), (void*)offsetof(ColorfulPoint, point));
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(ColorfulPoint), (void*)offsetof(ColorfulPoint, color));
+    glEnableVertexAttribArray(1);
+    
+    glDrawArrays(GL_LINE_STRIP, 0, num);
+}
+
+void Renderer::DrawRect(int x, int y, int w, int h) {
     Point points[4];
     points[0].x = x;
     points[0].y = y;
@@ -141,15 +163,15 @@ void Render::DrawRect(int x, int y, int w, int h) {
 
     DrawPolygon(points, 4);
 }
-void Render::DrawRect(const Rect& rect) {
+void Renderer::DrawRect(const Rect& rect) {
     DrawRect(rect.x, rect.y, rect.w, rect.h);
 }
 
-void Render::DrawPolygon(vector<Point>& points) {
+void Renderer::DrawPolygon(vector<Point>& points) {
     DrawPolygon(points.data(), points.size());
 }
 
-void Render::DrawPolygon(Point* points, int num) {
+void Renderer::DrawPolygon(Point* points, int num) {
     if (num <= 2)
         return;
 
@@ -174,11 +196,11 @@ void Render::DrawPolygon(Point* points, int num) {
 }
 
 
-void Render::DrawPolygon(vector<ColorfulPoint>& points) {
+void Renderer::DrawPolygon(vector<ColorfulPoint>& points) {
     DrawPolygon(points.data(), points.size());
 }
 
-void Render::DrawPolygon(ColorfulPoint* points, int num) {
+void Renderer::DrawPolygon(ColorfulPoint* points, int num) {
     if (num <= 2)
         return;
     useGeomentryColorfulProgram();
@@ -192,12 +214,10 @@ void Render::DrawPolygon(ColorfulPoint* points, int num) {
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(ColorfulPoint), (void*)offsetof(ColorfulPoint, color));
     glEnableVertexAttribArray(1);
 
-    if (fill_color_.a != 0) {
-        glDrawArrays(GL_TRIANGLE_FAN, 0, num);
-    }
+    glDrawArrays(GL_TRIANGLE_FAN, 0, num);
 }
 
-void Render::DrawCircle(int x, int y, int radius) {
+void Renderer::DrawCircle(int x, int y, int radius) {
     float delta_radian = 2*glm::pi<float>()/100;
     vector<Point> points;
 
@@ -231,7 +251,7 @@ void Render::DrawCircle(int x, int y, int radius) {
 }
 
 // FIXME can't work
-void Render::DrawPoint(int x, int y) {
+void Renderer::DrawPoint(int x, int y) {
     float data[2];
     data[0] = x;
     data[1] = y;
@@ -249,7 +269,7 @@ void Render::DrawPoint(int x, int y) {
     glDrawArrays(GL_POINTS, 0, 1);
 }
 
-void Render::DrawTexture(Texture* texture, const Rect* src_rect, const Rect* dst_rect, const Color* color, float degree, FlipType flip) {
+void Renderer::DrawTexture(Texture* texture, const Rect* src_rect, const Rect* dst_rect, const Color* color, float degree, FlipType flip) {
     if (!texture)
         return;
     useTextureProgram();
@@ -312,7 +332,6 @@ void Render::DrawTexture(Texture* texture, const Rect* src_rect, const Rect* dst
     }
     model = glm::translate(model, glm::vec3(rect.w/2.0+rect.x, rect.h/2+rect.y, 0));
     model = glm::rotate(model, glm::radians(degree), glm::vec3(0, 0, 1));
-    model = glm::translate(model, glm::vec3(-rect.w/2.0, -rect.h/2.0, 0));
     float scale_x = rect.w,
           scale_y = rect.h;
     if (flip & FLIP_HORIZONTAL) {
@@ -322,6 +341,7 @@ void Render::DrawTexture(Texture* texture, const Rect* src_rect, const Rect* dst
         scale_y = -scale_y;
     }
     model = glm::scale(model, glm::vec3(scale_x, scale_y, 1));
+    model = glm::translate(model, glm::vec3(-0.5, -0.5, 0));
 
     texture_program_->UniformMat4f("model", model);
     texture_program_->UniformMat4f("proj", current_proj_);
@@ -342,7 +362,7 @@ void Render::DrawTexture(Texture* texture, const Rect* src_rect, const Rect* dst
 
 }
 
-void Render::SetTarget(Texture* texture) {
+void Renderer::SetTarget(Texture* texture) {
     if (texture) {
         is_at_default_framebuffer = false;
         glBindFramebuffer(GL_FRAMEBUFFER, texture->fbo_);
@@ -356,15 +376,15 @@ void Render::SetTarget(Texture* texture) {
     }
 }
 
-Render::~Render() {
+Renderer::~Renderer() {
     destroy();
 }
 
-void Render::destroy() {
+void Renderer::destroy() {
     delete geo_pure_color_program_;
     delete geo_colorful_program_;
     delete texture_program_;
-    // delete test_program_;
+
     glDeleteBuffers(1, &vbo_);
     vbo_ = 0;
     glDeleteBuffers(1, &ebo_);
@@ -373,12 +393,12 @@ void Render::destroy() {
     vao_ = 0;
 }
 
-Render* CreateRender(int window_width, int window_height) {
-    Render* render = new Render(window_width, window_height);
+Renderer* CreateRenderer(int window_width, int window_height) {
+    Renderer* render = new Renderer(window_width, window_height);
     return render;
 }
 
-void DestroyRender(Render* render) {
+void DestroyRenderer(Renderer* render) {
     delete render;
 }
 

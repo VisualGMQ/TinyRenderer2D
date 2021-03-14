@@ -1,5 +1,6 @@
-#include <vector>
 #include "app.hpp"
+
+#include <vector>
 
 class DrawShapes: public App {
 public:
@@ -18,12 +19,19 @@ private:
         render_->SetDrawColor(255, 0, 0);
         render_->DrawLine(100, 100, 100, 200);
 
-        tinyrender2d::Point points[] = {
+        tinyrenderer2d::Point points[] = {
             {150, 50},
             {200, 100},
             {250, 50}
         };
         render_->DrawLines(points, 3);
+
+        tinyrenderer2d::ColorfulPoint colorful_points[] = {
+            {{250, 50},  {255, 0, 0, 255}},
+            {{300, 100}, {0, 255, 0, 255}},
+            {{350, 50},  {0, 0, 255, 255}}
+        };
+        render_->DrawLines(colorful_points, 3);
     }
 
     void drawRect() {
@@ -62,7 +70,7 @@ private:
 
     void drawPolygon() {
         // make sure points are clockwise
-        tinyrender2d::Point points[] = {
+        tinyrenderer2d::Point points[] = {
             {100, 200},
             {200, 200},
             {200, 300},
@@ -73,7 +81,7 @@ private:
         render_->SetFillColorOpacity(255);
         render_->DrawPolygon(points, 4);
 
-        tinyrender2d::ColorfulPoint color_points[] = {
+        tinyrenderer2d::ColorfulPoint color_points[] = {
             {{250, 200}, {255, 0, 0, 255}},
             {{350, 200}, {0, 255, 0, 255}},
             {{350, 300}, {0, 0, 255, 255}},
