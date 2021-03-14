@@ -57,10 +57,10 @@ DestroyRenderer(render);
 
 绘制基本图形
 
-![snapshot1](./screen_snapshot/snapshot1.png)
+![snapshot1](https://i.loli.net/2021/03/14/7LA9aqNTPZGKc6Y.png)
 
 
 
 绘制图像
 
-![snapshot2](./screen_snapshot/snapshot2.png)
+![snapshot2](https://i.loli.net/2021/03/14/1OhZ6LPgcEGxyS4.png)

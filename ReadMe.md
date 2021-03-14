@@ -61,11 +61,11 @@ other main functions are in [include/tinyrenderer2d/renderer.hpp](include/tinyre
 
 draw basic shapes
 
-![snapshot1](./screen_snapshot/snapshot1.png)
+![snapshot1](https://i.loli.net/2021/03/14/7LA9aqNTPZGKc6Y.png)
 
 
 
 draw image
 
-![snapshot2](./screen_snapshot/snapshot2.png)
+![snapshot2](https://i.loli.net/2021/03/14/1OhZ6LPgcEGxyS4.png)
 
